@@ -1,103 +1,182 @@
-import Image from "next/image";
+"use client";
+
+import * as THREE from "three";
+import { useRef, useState } from "react";
+import { Canvas, useFrame, useThree, ThreeElements } from "@react-three/fiber";
+import { Image, ScrollControls, Scroll, useScroll } from "@react-three/drei";
+import { proxy, useSnapshot } from "valtio";
+import { easing } from "maath";
+
+const material = new THREE.LineBasicMaterial({ color: "white" });
+const geometry = new THREE.BufferGeometry().setFromPoints([
+  new THREE.Vector3(0, -0.5, 0),
+  new THREE.Vector3(0, 0.5, 0),
+]);
+
+type StateType = {
+  clicked: number | null;
+  urls: string[];
+};
+
+const state = proxy<StateType>({
+  clicked: null,
+  urls: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 5, 7, 8, 2, 4, 9, 6].map(
+    (u) => `/${u}.jpeg`
+  ),
+});
+
+function Minimap() {
+  const ref = useRef<THREE.Group>(null);
+  const scroll = useScroll();
+  const { urls } = useSnapshot(state);
+  const { height } = useThree((state) => state.viewport);
+
+  useFrame((state, delta) => {
+    if (!ref.current) return;
+    ref.current.children.forEach((child, index) => {
+      const y = scroll.curve(
+        index / urls.length - 1.5 / urls.length,
+        4 / urls.length
+      );
+      const line = child as THREE.Line;
+      easing.damp(line.scale, "y", 0.15 + y / 6, 0.15, delta);
+    });
+  });
+
+  return (
+    <group ref={ref}>
+      {urls.map((_, i) => (
+        <line
+          key={i}
+          geometry={geometry}
+          material={material}
+          position={[i * 0.06 - urls.length * 0.03, -height / 2 + 0.6, 0]}
+        />
+      ))}
+    </group>
+  );
+}
+
+type ItemProps = {
+  index: number;
+  position: [number, number, number];
+  scale: [number, number, number];
+  url: string;
+};
+
+function Item({ index, position, scale, url, ...props }: ItemProps) {
+  const ref = useRef<any>(null);
+  const scroll = useScroll();
+  const { clicked, urls } = useSnapshot(state);
+  const [hovered, hover] = useState(false);
+
+  const click = () => (state.clicked = index === clicked ? null : index);
+  const over = () => hover(true);
+  const out = () => hover(false);
+
+  useFrame((frameState, delta) => {
+    if (!ref.current) return;
+
+    const y = scroll.curve(
+      index / urls.length - 1.5 / urls.length,
+      4 / urls.length
+    );
+    //拡大
+    easing.damp3(
+      ref.current.scale,
+      [clicked === index ? 4.7 : scale[0], clicked === index ? 5 : 4 + y, 1],
+      0.15,
+      delta
+    );
+
+    if (ref.current.material && "scale" in ref.current.material) {
+      const materialScale = ref.current.material.scale as THREE.Vector2;
+      materialScale.x = ref.current.scale.x;
+      materialScale.y = ref.current.scale.y;
+    }
+    //位置調整
+    if (clicked !== null && index < clicked)
+      easing.damp(ref.current.position, "x", position[0] - 2, 0.15, delta);
+    if (clicked !== null && index > clicked)
+      easing.damp(ref.current.position, "x", position[0] + 2, 0.15, delta);
+    if (clicked === null || clicked === index)
+      easing.damp(ref.current.position, "x", position[0], 0.15, delta);
+
+    //選択してる要素の強調：少し白くする
+    if (ref.current.material) {
+      easing.damp(
+        ref.current.material,
+        "grayscale",
+        hovered || clicked === index ? 0 : Math.max(0, 1 - y),
+        0.15,
+        delta
+      );
+      easing.dampC(
+        ref.current.material.color,
+        hovered || clicked === index ? "white" : "#aaa",
+        hovered ? 0.3 : 0.15,
+        delta
+      );
+    }
+  });
+
+  return (
+    <Image
+      ref={ref}
+      {...props}
+      position={position}
+      scale={scale}
+      onClick={click}
+      onPointerOver={over}
+      onPointerOut={out}
+      url={url}
+      alt="photo"
+    />
+  );
+}
+
+type ItemsProps = {
+  w?: number;
+  gap?: number;
+};
+
+function Items({ w = 0.7, gap = 0.15 }: ItemsProps) {
+  const { urls } = useSnapshot(state);
+  const { width } = useThree((state) => state.viewport);
+  const xW = w + gap;
+
+  return (
+    <ScrollControls
+      horizontal
+      damping={0.1}
+      pages={(width - xW + urls.length * xW) / width}
+    >
+      <Minimap />
+      <Scroll>
+        {urls.map((url, i) => (
+          <Item
+            key={i}
+            index={i}
+            position={[i * xW, 0, 0]}
+            scale={[w, 4, 1]}
+            url={url}
+          />
+        ))}
+      </Scroll>
+    </ScrollControls>
+  );
+}
 
 export default function Home() {
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+    <div className="w-full h-screen bg-slate-900">
+      <Canvas
+        gl={{ antialias: false }}
+        dpr={[1, 1.5]}
+        onPointerMissed={() => (state.clicked = null)}
+      >
+        <Items />
+      </Canvas>
     </div>
   );
 }
