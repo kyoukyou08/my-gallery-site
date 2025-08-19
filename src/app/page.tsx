@@ -72,7 +72,7 @@ function Item({ index, position, scale, url, ...props }: ItemProps) {
     //拡大
     easing.damp3(
       ref.current.scale,
-      [clicked === index ? 3.5 : scale[0], clicked === index ? 5 : 4 + y, 1],
+      [clicked === index ? 3 : scale[0], clicked === index ? 5 : 4 + y, 1],
       0.15,
       delta
     );
@@ -151,12 +151,14 @@ function Items({ w = 0.7, gap = 0.15 }: ItemsProps) {
 export default function Home() {
   return (
     <div className="w-full h-screen bg-amber-50">
-      <header className="flex justify-between  py-3 px-20 absolute top-0 right-0 h-[16px] w-screen">
+      <header className="flex justify-between  lg:py-3 py-8  lg:px-20 px-4 absolute top-0 right-0 h-[16px] w-screen">
         <div>
-          <p className="text-slate-900 text-4xl font-bold">photo shelf</p>
+          <p className="text-slate-900 lg:text-4xl font-bold text-3xl">
+            photo shelf
+          </p>
         </div>
         <div>
-          <ul className="flex col gap-4 font-bold">
+          <ul className="hidden lg:flex col gap-4 font-bold ">
             <li>
               <a href="">about</a>
             </li>
@@ -175,8 +177,8 @@ export default function Home() {
           <Items />
         </Canvas>
       </div>
-      <footer className=" flex justify-end py-8 px-20 absolute bottom-0 w-screen z-0">
-        <div className="font-bold text-5xl">sns</div>
+      <footer className=" flex justify-end py-8 px-20 absolute bottom-0 w-screen ">
+        <div className="font-bold text-3xl lg:text-5xl">sns</div>
       </footer>
     </div>
   );
