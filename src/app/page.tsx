@@ -2,7 +2,7 @@
 
 import * as THREE from "three";
 import { useRef, useState } from "react";
-import { Canvas, useFrame, useThree, ThreeElements } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Image, ScrollControls, Scroll, useScroll } from "@react-three/drei";
 import { proxy, useSnapshot } from "valtio";
 import { easing } from "maath";
@@ -48,7 +48,7 @@ function Minimap() {
       {urls.map((_, i) => (
         <line
           key={i}
-          geometry={geometry}
+          args={[geometry]}
           material={material}
           position={[i * 0.06 - urls.length * 0.03, -height / 2 + 0.6, 0]}
         />
@@ -56,16 +56,15 @@ function Minimap() {
     </group>
   );
 }
-
+//写真単体での処理
 type ItemProps = {
   index: number;
   position: [number, number, number];
   scale: [number, number, number];
   url: string;
 };
-
 function Item({ index, position, scale, url, ...props }: ItemProps) {
-  const ref = useRef<THREE.Group>(null);
+  const ref = useRef<THREE.Mesh>(null);
   const scroll = useScroll();
   const { clicked, urls } = useSnapshot(state);
   const [hovered, hover] = useState(false);
@@ -84,16 +83,10 @@ function Item({ index, position, scale, url, ...props }: ItemProps) {
     //拡大
     easing.damp3(
       ref.current.scale,
-      [clicked === index ? 4.7 : scale[0], clicked === index ? 5 : 4 + y, 1],
+      [clicked === index ? 3.5 : scale[0], clicked === index ? 5 : 4 + y, 1],
       0.15,
       delta
     );
-
-    if (ref.current.material && "scale" in ref.current.material) {
-      const materialScale = ref.current.material.scale as THREE.Vector2;
-      materialScale.x = ref.current.scale.x;
-      materialScale.y = ref.current.scale.y;
-    }
     //位置調整
     if (clicked !== null && index < clicked)
       easing.damp(ref.current.position, "x", position[0] - 2, 0.15, delta);
@@ -111,6 +104,7 @@ function Item({ index, position, scale, url, ...props }: ItemProps) {
         0.15,
         delta
       );
+
       easing.dampC(
         ref.current.material.color,
         hovered || clicked === index ? "white" : "#aaa",
@@ -125,7 +119,7 @@ function Item({ index, position, scale, url, ...props }: ItemProps) {
       ref={ref}
       {...props}
       position={position}
-      scale={scale}
+      scale={scale as [number, number, number]}
       onClick={click}
       onPointerOver={over}
       onPointerOut={out}
@@ -134,6 +128,7 @@ function Item({ index, position, scale, url, ...props }: ItemProps) {
     />
   );
 }
+//並べたときの処理
 
 type ItemsProps = {
   w?: number;
@@ -169,7 +164,7 @@ function Items({ w = 0.7, gap = 0.15 }: ItemsProps) {
 
 export default function Home() {
   return (
-    <div className="w-full h-screen bg-slate-900">
+    <div className="w-full h-screen bg-amber-50">
       <Canvas
         gl={{ antialias: false }}
         dpr={[1, 1.5]}
