@@ -65,7 +65,7 @@ type ItemProps = {
 };
 
 function Item({ index, position, scale, url, ...props }: ItemProps) {
-  const ref = useRef<any>(null);
+  const ref = useRef<THREE.Group>(null);
   const scroll = useScroll();
   const { clicked, urls } = useSnapshot(state);
   const [hovered, hover] = useState(false);
