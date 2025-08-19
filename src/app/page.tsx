@@ -7,12 +7,6 @@ import { Image, ScrollControls, Scroll, useScroll } from "@react-three/drei";
 import { proxy, useSnapshot } from "valtio";
 import { easing } from "maath";
 
-const material = new THREE.LineBasicMaterial({ color: "white" });
-const geometry = new THREE.BufferGeometry().setFromPoints([
-  new THREE.Vector3(0, -0.5, 0),
-  new THREE.Vector3(0, 0.5, 0),
-]);
-
 type StateType = {
   clicked: number | null;
   urls: string[];
@@ -46,12 +40,7 @@ function Minimap() {
   return (
     <group ref={ref}>
       {urls.map((_, i) => (
-        <line
-          key={i}
-          args={[geometry]}
-          material={material}
-          position={[i * 0.06 - urls.length * 0.03, -height / 2 + 0.6, 0]}
-        />
+        <line key={i} />
       ))}
     </group>
   );
@@ -87,6 +76,12 @@ function Item({ index, position, scale, url, ...props }: ItemProps) {
       0.15,
       delta
     );
+    if (ref.current.material && "scale" in ref.current.material) {
+      const materialScale = ref.current.material.scale as THREE.Vector2;
+      materialScale.x = ref.current.scale.x;
+      materialScale.y = ref.current.scale.y;
+    }
+
     //位置調整
     if (clicked !== null && index < clicked)
       easing.damp(ref.current.position, "x", position[0] - 2, 0.15, delta);
@@ -104,13 +99,6 @@ function Item({ index, position, scale, url, ...props }: ItemProps) {
         0.15,
         delta
       );
-
-      easing.dampC(
-        ref.current.material.color,
-        hovered || clicked === index ? "white" : "#aaa",
-        hovered ? 0.3 : 0.15,
-        delta
-      );
     }
   });
 
@@ -119,12 +107,10 @@ function Item({ index, position, scale, url, ...props }: ItemProps) {
       ref={ref}
       {...props}
       position={position}
-      scale={scale as [number, number, number]}
       onClick={click}
       onPointerOver={over}
       onPointerOut={out}
       url={url}
-      alt="photo"
     />
   );
 }
@@ -165,13 +151,33 @@ function Items({ w = 0.7, gap = 0.15 }: ItemsProps) {
 export default function Home() {
   return (
     <div className="w-full h-screen bg-amber-50">
-      <Canvas
-        gl={{ antialias: false }}
-        dpr={[1, 1.5]}
-        onPointerMissed={() => (state.clicked = null)}
-      >
-        <Items />
-      </Canvas>
+      <header className="flex justify-between  py-3 px-20 absolute top-0 right-0 h-[16px] w-screen">
+        <div>
+          <p className="text-slate-900 text-4xl font-bold">photo shelf</p>
+        </div>
+        <div>
+          <ul className="flex col gap-4 font-bold">
+            <li>
+              <a href="">about</a>
+            </li>
+            <li>
+              <a href="">contact</a>
+            </li>
+          </ul>
+        </div>
+      </header>
+      <div className="h-screen z-900">
+        <Canvas
+          gl={{ antialias: false }}
+          dpr={[1, 1.5]}
+          onPointerMissed={() => (state.clicked = null)}
+        >
+          <Items />
+        </Canvas>
+      </div>
+      <footer className=" flex justify-end py-8 px-20 absolute bottom-0 w-screen z-0">
+        <div className="font-bold text-5xl">sns</div>
+      </footer>
     </div>
   );
 }
