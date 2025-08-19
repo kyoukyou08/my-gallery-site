@@ -178,7 +178,7 @@ export default function Home() {
         </Canvas>
       </div>
       <footer className=" flex justify-end py-8 px-20 absolute bottom-0 w-screen ">
-        <div className="font-bold text-3xl lg:text-5xl">sns</div>
+        <div className="font-bold text-3xl lg:text-5xl">-----</div>
       </footer>
     </div>
   );
