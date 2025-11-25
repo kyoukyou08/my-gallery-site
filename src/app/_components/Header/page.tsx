@@ -1,14 +1,16 @@
 import Link from "next/link";
-import Nav from "../ui/nav/page";
+import Nav from "@/app/_components/ui/nav/page";
 
 export default function Header() {
   return (
     <>
-      <div className=" flex justify-between align-middle items-center lg:py-3 py-8  lg:px-20 px-4  top-0 right-1 absolute h-[16px] w-screen">
+      <div className="flex justify-between align-middle items-center lg:py-3 py-8  lg:px-20 px-4  top-0 right-1 absolute h-[16px] w-screen">
         <div>
-          <p className="text-slate-900 lg:text-4xl font-bold text-3xl">
-            photo shelf
-          </p>
+          <Link href="/">
+            <p className="text-slate-900 lg:text-4xl font-bold text-3xl">
+              TEMAE
+            </p>
+          </Link>
         </div>
         <div>
           <Nav />
