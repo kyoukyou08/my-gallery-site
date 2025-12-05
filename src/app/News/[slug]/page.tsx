@@ -4,6 +4,8 @@ import Article from "@/app/_components/Article/page";
 import { notFound } from "next/navigation";
 // import ButtonLink from "@/app/_components/ButtonLink/page";
 
+
+//buidエラー対応要
 type Props = {
   params: {
     slug: string;
